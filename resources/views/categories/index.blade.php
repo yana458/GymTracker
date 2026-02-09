@@ -29,7 +29,7 @@
                         <p class="text-sm text-gray-500">Ej: Pecho, Espalda, Pierna…</p>
                     </div>
 
-                    <form method="POST" action="{{ route('categories.store') }}" class="space-y-4">
+                    <form method="POST" action="{{ route('categories.store') }}" enctype="multipart/form-data" class="space-y-4">
                         @csrf
 
                         <div>
@@ -47,18 +47,20 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">Icon path</label>
+                            <label class="block text-sm font-medium text-gray-700">Icono (PNG/JPG/SVG)</label>
                             <input
-                                name="icon_path"
-                                value="{{ old('icon_path', 'icons/default.svg') }}"
+                                type="file"
+                                name="icon"
+                                accept=".png,.jpg,.jpeg,.svg"
                                 required
-                                class="mt-1 w-full rounded-xl border-gray-200 focus:border-gray-300 focus:ring-0"
-                                placeholder="icons/chest.svg"
+                                class="mt-1 block w-full text-sm text-gray-700
+                                    file:mr-4 file:rounded-xl file:border-0
+                                    file:bg-gray-900 file:px-4 file:py-2 file:text-white file:font-semibold
+                                    hover:file:bg-gray-800"
                             >
-                            @error('icon_path')
+                            @error('icon')
                                 <p class="mt-1 text-sm text-rose-600">{{ $message }}</p>
                             @enderror
-                            <p class="mt-2 text-xs text-gray-500">Solo guardamos la ruta (no subimos archivos).</p>
                         </div>
 
                         <button class="w-full inline-flex justify-center items-center gap-2 rounded-xl bg-gray-900 text-white py-2.5 font-semibold hover:bg-gray-800">
@@ -71,23 +73,32 @@
                 <div class="lg:col-span-2 bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
                     <div class="p-6 border-b border-gray-100">
                         <h3 class="text-lg font-semibold text-gray-900">Listado</h3>
-                        <p class="text-sm text-gray-500">Ordenado y paginado</p>
+                        <p class="text-sm text-gray-500">Crea y gestiona categorías</p>
                     </div>
 
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead class="bg-gray-50 text-gray-600">
                                 <tr>
-                                    <th class="text-left font-semibold px-6 py-3">Nombre</th>
                                     <th class="text-left font-semibold px-6 py-3">Icono</th>
+                                    <th class="text-left font-semibold px-6 py-3">Nombre</th>
                                     <th class="text-right font-semibold px-6 py-3">Acciones</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
                                 @forelse($categories as $c)
                                     <tr class="hover:bg-gray-50/60">
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center gap-3">
+                                                <img
+                                                    src="{{ asset($c->icon_path) }}"
+                                                    alt="icon"
+                                                    class="h-9 w-9 rounded-xl border border-gray-200 bg-white p-1 object-contain"
+                                                    onerror="this.onerror=null;this.src='{{ asset('icons/default.svg') }}';"
+                                                >
+                                            </div>
+                                        </td>
                                         <td class="px-6 py-4 font-medium text-gray-900">{{ $c->name }}</td>
-                                        <td class="px-6 py-4 text-gray-500">{{ $c->icon_path }}</td>
                                         <td class="px-6 py-4">
                                             <div class="flex justify-end gap-2">
                                                 <a

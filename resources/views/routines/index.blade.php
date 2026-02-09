@@ -20,14 +20,47 @@
                 </div>
             @endif
 
-            <div class="grid lg:grid-cols-3 gap-6">
+            <div class="grid lg:grid-cols-12 gap-6">
 
                 {{-- Crear --}}
-                <div class="bg-white shadow-sm rounded-2xl border border-gray-100 p-6">
+                <div class="bg-white shadow-sm rounded-2xl border border-gray-100 p-6 lg:col-span-5 lg:sticky lg:top-6 self-start">
                     <div class="mb-5">
                         <h3 class="text-lg font-semibold text-gray-900">Nueva rutina</h3>
-                        <p class="text-sm text-gray-500">Elige ejercicios por categoría (sin scroll interno)</p>
+                        <p class="text-sm text-gray-500">Elige ejercicios por categoría</p>
                     </div>
+                    
+                    <form method="GET" action="{{ route('routines.index') }}" class="mb-5 space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Categoría</label>
+                                <select name="cat" class="mt-1 w-full rounded-xl border-gray-200 focus:border-gray-300 focus:ring-0">
+                                    <option value="">Todas</option>
+                                    @foreach($categories as $cat)
+                                        <option value="{{ $cat->id }}" @selected((string)request('cat') === (string)$cat->id)>
+                                            {{ $cat->name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600">Buscar</label>
+                                <input name="q" value="{{ request('q') }}"
+                                    class="mt-1 w-full rounded-xl border-gray-200 focus:border-gray-300 focus:ring-0"
+                                    placeholder="press, sentadilla, remo...">
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button class="inline-flex items-center rounded-xl bg-gray-900 px-4 py-2 text-white text-sm font-semibold hover:bg-gray-800">
+                                Filtrar
+                            </button>
+                            <a href="{{ route('routines.index') }}"
+                            class="inline-flex items-center rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">
+                                Limpiar
+                            </a>
+                        </div>
+                    </form>
 
                     <form method="POST" action="{{ route('routines.store') }}" class="space-y-4">
                         @csrf
@@ -44,7 +77,7 @@
                             <label class="block text-sm font-medium text-gray-700">Descripción</label>
                             <input name="description" value="{{ old('description') }}"
                                    class="mt-1 w-full rounded-xl border-gray-200 focus:border-gray-300 focus:ring-0"
-                                   placeholder="Hipertrofia / Fuerza...">
+                                   placeholder="Cardio / Fuerza...">
                             @error('description') <p class="mt-1 text-sm text-rose-600">{{ $message }}</p> @enderror
                         </div>
 
@@ -70,15 +103,38 @@
                                             <span class="font-semibold text-gray-900">{{ $catName }}</span>
                                             <span class="text-xs text-gray-500">{{ $items->count() }} ejercicios</span>
                                         </summary>
+                            
+                            <div class="pt-2">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="text-sm font-semibold text-gray-900">Ejercicios</p>
+                                    <span class="text-xs text-gray-500">S=series · R=reps</span>
+                                </div>
 
-                                        <div class="px-4 pb-4 space-y-3">
-                                            @foreach($items as $e)
-                                                <div class="rounded-2xl border border-gray-100 bg-white p-4">
-                                                    <div class="flex items-start justify-between gap-3">
+                                @error('exercises')
+                                    <p class="mb-2 text-sm text-rose-600">{{ $message }}</p>
+                                @enderror
+
+                                @php
+                                    $grouped = $exercises->groupBy(fn($e) => $e->category?->name ?? 'Sin categoría');
+                                    $oldExercises = array_map('strval', old('exercises', []));
+                                @endphp
+
+                                <div class="space-y-5">
+                                    @foreach($grouped as $catName => $items)
+                                        <div>
+                                            <div class="flex items-center justify-between">
+                                                <p class="text-sm font-semibold text-gray-900">{{ $catName }}</p>
+                                                <span class="text-xs text-gray-500">{{ $items->count() }} ejercicios</span>
+                                            </div>
+
+                                            <div class="mt-3 space-y-3">
+                                                @foreach($items as $e)
+                                                    <div class="rounded-2xl border border-gray-100 bg-white p-4">
                                                         <label class="flex items-start gap-3 cursor-pointer">
                                                             <input type="checkbox" name="exercises[]" value="{{ $e->id }}"
-                                                                   class="mt-1 rounded border-gray-300"
-                                                                   @checked(in_array((string)$e->id, array_map('strval', $oldExercises)))>
+                                                                class="mt-1 rounded border-gray-300"
+                                                                @checked(in_array((string)$e->id, $oldExercises))>
+
                                                             <div>
                                                                 <p class="font-semibold text-gray-900">{{ $e->name }}</p>
                                                                 <p class="text-xs text-gray-500 mt-1 whitespace-normal break-words">
@@ -86,43 +142,45 @@
                                                                 </p>
                                                             </div>
                                                         </label>
-                                                    </div>
 
-                                                    <div class="mt-3 grid grid-cols-3 gap-2">
-                                                        <div>
-                                                            <label class="block text-xs font-medium text-gray-600">Series</label>
-                                                            <input type="number" min="1"
-                                                                   name="pivot[{{ $e->id }}][target_sets]"
-                                                                   value="{{ old("pivot.$e->id.target_sets", 3) }}"
-                                                                   class="mt-1 w-full rounded-xl border-gray-200">
-                                                        </div>
-                                                        <div>
-                                                            <label class="block text-xs font-medium text-gray-600">Reps</label>
-                                                            <input type="number" min="1"
-                                                                   name="pivot[{{ $e->id }}][target_reps]"
-                                                                   value="{{ old("pivot.$e->id.target_reps", 10) }}"
-                                                                   class="mt-1 w-full rounded-xl border-gray-200">
-                                                        </div>
-                                                        <div>
-                                                            <label class="block text-xs font-medium text-gray-600">Descanso (s)</label>
-                                                            <input type="number" min="0"
-                                                                   name="pivot[{{ $e->id }}][rest_seconds]"
-                                                                   value="{{ old("pivot.$e->id.rest_seconds", 60) }}"
-                                                                   class="mt-1 w-full rounded-xl border-gray-200">
-                                                        </div>
+                                                        <details class="mt-3 rounded-xl border border-gray-200 bg-gray-50/60 px-3 py-2">
+                                                            <summary class="cursor-pointer select-none text-xs font-semibold text-gray-700">
+                                                                Ajustes (opcional): series, reps y descanso
+                                                            </summary>
+
+                                                            <div class="mt-2 grid grid-cols-3 gap-2">
+                                                                <div>
+                                                                    <label class="block text-xs font-medium text-gray-600">Series</label>
+                                                                    <input type="number" min="1"
+                                                                        name="pivot[{{ $e->id }}][target_sets]"
+                                                                        value="{{ old("pivot.$e->id.target_sets", 3) }}"
+                                                                        class="mt-1 w-full rounded-xl border-gray-200">
+                                                                </div>
+                                                                <div>
+                                                                    <label class="block text-xs font-medium text-gray-600">Reps</label>
+                                                                    <input type="number" min="1"
+                                                                        name="pivot[{{ $e->id }}][target_reps]"
+                                                                        value="{{ old("pivot.$e->id.target_reps", 10) }}"
+                                                                        class="mt-1 w-full rounded-xl border-gray-200">
+                                                                </div>
+                                                                <div>
+                                                                    <label class="block text-xs font-medium text-gray-600">Descanso (s)</label>
+                                                                    <input type="number" min="0"
+                                                                        name="pivot[{{ $e->id }}][rest_seconds]"
+                                                                        value="{{ old("pivot.$e->id.rest_seconds", 60) }}"
+                                                                        class="mt-1 w-full rounded-xl border-gray-200">
+                                                                </div>
+                                                            </div>
+                                                        </details>
                                                     </div>
-                                                </div>
-                                            @endforeach
+                                                @endforeach
+                                            </div>
                                         </div>
-                                    </details>
-                                @endforeach
-                            </div>
-
-                            <p class="mt-2 text-xs text-gray-500">
-                                Consejo: elige 3–7 ejercicios para una rutina realista.
-                            </p>
+                                    @endforeach
+                                </div>
+                            <p class="mt-3 text-xs text-gray-500">Consejo: elige 3–7 ejercicios para una rutina realista.</p>
                         </div>
-
+                                            
                         <button class="w-full inline-flex justify-center items-center gap-2 rounded-xl bg-gray-900 text-white py-2.5 font-semibold hover:bg-gray-800">
                             Crear rutina
                         </button>
@@ -130,7 +188,7 @@
                 </div>
 
                 {{-- Listado rutinas --}}
-                <div class="lg:col-span-2 bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
+                <div class="lg:col-span-7 bg-white shadow-sm rounded-2xl border border-gray-100 overflow-hidden">
                     <div class="p-6 border-b border-gray-100">
                         <h3 class="text-lg font-semibold text-gray-900">Rutinas asociadas a ti</h3>
                         <p class="text-sm text-gray-500">Editar o borrar / desuscribir</p>

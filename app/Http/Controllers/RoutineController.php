@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Routine;
 use App\Models\Exercise;
 use Illuminate\Http\Request;
@@ -10,17 +11,33 @@ use Illuminate\Support\Facades\DB;
 
 class RoutineController extends Controller
 {
-    public function index()
+   public function index(Request $request)
     {
         $routines = Auth::user()
             ->routines()
-            ->with('exercises')
+            ->with('exercises.category')
             ->orderBy('name')
             ->paginate(10);
 
-        $exercises = Exercise::with('category')->orderBy('name')->get();
+        $categories = Category::orderBy('name')->get();
 
-        return view('routines.index', compact('routines', 'exercises'));
+        $exQuery = Exercise::with('category')->orderBy('name');
+
+        if ($request->filled('cat')) {
+            $exQuery->where('category_id', $request->query('cat'));
+        }
+
+        if ($request->filled('q')) {
+            $q = $request->query('q');
+            $exQuery->where(function ($w) use ($q) {
+                $w->where('name', 'like', "%{$q}%")
+                ->orWhere('instruction', 'like', "%{$q}%");
+            });
+        }
+
+        $exercises = $exQuery->get();
+
+        return view('routines.index', compact('routines', 'exercises', 'categories'));
     }
 
     public function store(Request $request)

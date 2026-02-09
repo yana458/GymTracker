@@ -87,7 +87,7 @@
                 <div class="lg:col-span-2 space-y-4">
                     <div class="bg-white shadow-sm rounded-2xl border border-gray-100 p-6">
                         <h3 class="text-lg font-semibold text-gray-900">Listado</h3>
-                        <p class="text-sm text-gray-500">Sin scroll interno, lectura cómoda</p>
+                        <p class="text-sm text-gray-500">Ejercicios disponibles</p>
                     </div>
 
                     <div class="grid md:grid-cols-2 gap-4">
