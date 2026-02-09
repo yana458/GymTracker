@@ -3,63 +3,58 @@
 namespace App\Http\Controllers;
 
 use App\Models\Exercise;
+use App\Models\Category;
 use Illuminate\Http\Request;
 
 class ExerciseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
-        //
+        $exercises = Exercise::with('category')->orderBy('name')->paginate(10);
+        $categories = Category::orderBy('name')->get();
+
+        return view('exercises.index', compact('exercises', 'categories'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
-        //
+        $validated = $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string|max:255',
+            'instruction' => 'required|string',
+        ]);
+
+        Exercise::create($validated);
+
+        return redirect()->route('exercises.index')
+            ->with('success', 'Ejercicio creado correctamente.');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Exercise $exercise)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(Exercise $exercise)
     {
-        //
+        $categories = Category::orderBy('name')->get();
+        return view('exercises.edit', compact('exercise', 'categories'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, Exercise $exercise)
     {
-        //
+        $validated = $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'name' => 'required|string|max:255',
+            'instruction' => 'required|string',
+        ]);
+
+        $exercise->update($validated);
+
+        return redirect()->route('exercises.index')
+            ->with('success', 'Ejercicio actualizado correctamente.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(Exercise $exercise)
     {
-        //
+        $exercise->delete();
+
+        return redirect()->route('exercises.index')
+            ->with('success', 'Ejercicio eliminado correctamente.');
     }
 }

@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Routine extends Model
 {
+    use HasFactory;
     protected $fillable = ['name','description'];
 
     public function users()
@@ -16,7 +18,6 @@ class Routine extends Model
     public function exercises()
     {
         return $this->belongsToMany(Exercise::class)
-            ->withPivot(['sequence','target_sets','target_reps','rest_seconds'])
-            ->orderBy('exercise_routine.sequence');
+            ->withPivot(['sequence','target_sets','target_reps','rest_seconds']);
     }
 }
