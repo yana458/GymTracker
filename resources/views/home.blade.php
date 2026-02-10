@@ -40,18 +40,12 @@
         {{-- Hero --}}
         <section class="grid lg:grid-cols-2 gap-10 items-center">
             <div>
-                <div class="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-700">
-                    <span class="h-2 w-2 rounded-full bg-emerald-500"></span>
-                    Simple · Rápido · Bonito
-                </div>
-
-                <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
+                <h1 class="mt-4 mb-8 text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900">
                     Organiza tus rutinas sin complicarte.
                 </h1>
 
-                <p class="mt-4 text-lg text-slate-600">
+                <p class="mt-4 text-2xl text-slate-600">
                     Crea categorías, añade ejercicios y monta rutinas con series, repeticiones y descansos.
-                    Todo en un panel claro y fácil.
                 </p>
 
                 <div class="mt-6 flex flex-col sm:flex-row gap-3">
@@ -72,7 +66,7 @@
                         <div class="h-8 w-8 rounded-full bg-slate-300"></div>
                         <div class="h-8 w-8 rounded-full bg-slate-400"></div>
                     </div>
-                    <span>Panel pensado para prácticas y demo rápida</span>
+                    <span>Vista Previa de Una Rutina</span>
                 </div>
             </div>
 
@@ -148,8 +142,8 @@
         <section class="mt-12">
             <div class="bg-slate-900 text-white rounded-[2rem] p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                 <div>
-                    <p class="text-xl font-extrabold">¿Lista para entrar?</p>
-                    <p class="mt-1 text-white/80">Inicia sesión y tendrás tu panel con accesos rápidos.</p>
+                    <p class="text-xl font-extrabold">¿Lista para entrenar?</p>
+                    <p class="mt-1 text-white/80">Inicia sesión y accede a tu panel personalizado con accesos rápidos.</p>
                 </div>
                 <div class="flex gap-3">
                     <a href="{{ route('login') }}"
@@ -168,7 +162,7 @@
     </main>
 
     <footer class="py-10 text-center text-sm text-slate-500">
-        Gym Tracker · Laravel + Breeze + Tailwind
+        Gym Tracker &copy; {{ date('Y') }}. Todos los derechos reservados.
     </footer>
 </body>
 </html>

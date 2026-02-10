@@ -14,19 +14,22 @@ class RoutineResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
 
-            // ejercicios con pivot
             'exercises' => $this->whenLoaded('exercises', function () {
-                return $this->exercises->map(function ($ex) {
+                return $this->exercises->map(function ($e) {
                     return [
-                        'id' => $ex->id,
-                        'name' => $ex->name,
-                        'instruction' => $ex->instruction,
-                        'category_id' => $ex->category_id,
-
-                        'sequence' => $ex->pivot->sequence,
-                        'target_sets' => $ex->pivot->target_sets,
-                        'target_reps' => $ex->pivot->target_reps,
-                        'rest_seconds' => $ex->pivot->rest_seconds,
+                        'id' => $e->id,
+                        'name' => $e->name,
+                        'instruction' => $e->instruction,
+                        'category' => $e->category ? [
+                            'id' => $e->category->id,
+                            'name' => $e->category->name,
+                            'icon_path' => $e->category->icon_path,
+                        ] : null,
+                        'pivot' => [
+                            'target_sets' => $e->pivot->target_sets ?? 3,
+                            'target_reps' => $e->pivot->target_reps ?? 10,
+                            'rest_seconds' => $e->pivot->rest_seconds ?? 60,
+                        ],
                     ];
                 });
             }),

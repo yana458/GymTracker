@@ -2,10 +2,10 @@
     <x-slot name="header">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
-                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                <h2 class="font-semibold text-2xl text-gray-800 leading-tight">
                     Bienvenid@, {{ auth()->user()->name }}
                 </h2>
-                <p class="text-sm text-gray-500">Tu panel rápido de Gym Tracker</p>
+                <p class="text-l text-gray-500">Tu panel rápido de Gym Tracker</p>
             </div>
 
             <div class="flex gap-2">

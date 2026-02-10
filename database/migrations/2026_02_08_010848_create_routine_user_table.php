@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::create('routine_user', function (Blueprint $table) {
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->foreignId('routine_id')->constrained()->cascadeOnDelete();
+
+            $table->timestamps();
+
             $table->primary(['user_id', 'routine_id']);
         });
     }

@@ -20,6 +20,8 @@ return new class extends Migration
             $table->unsignedInteger('target_reps');
             $table->unsignedInteger('rest_seconds');
 
+            $table->timestamps();
+
             $table->primary(['exercise_id', 'routine_id']);
         });
     }

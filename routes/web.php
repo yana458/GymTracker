@@ -44,13 +44,13 @@ Route::get('/', function () {
 
 
 
-    // Dashboard (lo que trae Breeze)
+    // Dashboard 
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->middleware(['auth', 'verified'])->name('dashboard');
 
 
-    // Perfil (lo que trae Breeze)
+    // Perfil 
     Route::middleware('auth')->group(function () {
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');

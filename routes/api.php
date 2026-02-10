@@ -8,19 +8,22 @@ use App\Http\Controllers\Api\RoutineController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ExerciseController;
 
-// Auth API
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
 
+Route::name('api.')->group(function () {
 
-// Protegidas por Sanctum
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout']);
-    // Obtener el usuario autenticado
-    Route::get('/me', [AuthController::class, 'me']);
-    
+    // Auth API (públicas)
+    Route::post('/register', [AuthController::class, 'register'])->name('register');
+    Route::post('/login', [AuthController::class, 'login'])->name('login');
 
-    Route::apiResource('categories', CategoryController::class);
-    Route::apiResource('exercises', ExerciseController::class);
-    Route::apiResource('routines', RoutineController::class);
+    // Protegidas por Sanctum
+    Route::middleware('auth:sanctum')->group(function () {
+
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+        Route::get('/me', [AuthController::class, 'me'])->name('me');
+
+        // Resources API (pi.categories.index, api.exercises.index, etc.)
+        Route::apiResource('categories', CategoryController::class);
+        Route::apiResource('exercises', ExerciseController::class);
+        Route::apiResource('routines', RoutineController::class);
+    });
 });
