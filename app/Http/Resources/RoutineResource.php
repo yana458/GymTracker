@@ -14,6 +14,7 @@ class RoutineResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
 
+            // ejercicios con pivot
             'exercises' => $this->whenLoaded('exercises', function () {
                 return $this->exercises->map(function ($ex) {
                     return [
@@ -22,7 +23,6 @@ class RoutineResource extends JsonResource
                         'instruction' => $ex->instruction,
                         'category_id' => $ex->category_id,
 
-                        // pivote “al mismo nivel” (como pide el reto)
                         'sequence' => $ex->pivot->sequence,
                         'target_sets' => $ex->pivot->target_sets,
                         'target_reps' => $ex->pivot->target_reps,

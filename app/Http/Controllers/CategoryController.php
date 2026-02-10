@@ -30,7 +30,7 @@ class CategoryController extends Controller
 
         Category::create([
             'name' => $validated['name'],
-            'icon_path' => 'icons/uploads/' . $filename, // ✅ string en BD
+            'icon_path' => 'icons/uploads/' . $filename, // string en BD
         ]);
 
         return redirect()->route('categories.index')
