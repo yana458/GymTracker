@@ -6,6 +6,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Storage;
 
 class CategoryController extends Controller
 {
@@ -26,11 +27,11 @@ class CategoryController extends Controller
         $ext = $file->getClientOriginalExtension();
 
         $filename = Str::slug($validated['name']) . '-' . time() . '.' . $ext;
-        $file->move(public_path('icons/uploads'), $filename);
+        $path = $file->storeAs('icons', $filename, 'public');
 
         Category::create([
             'name' => $validated['name'],
-            'icon_path' => 'icons/uploads/' . $filename, // string en BD
+            'icon_path' =>  $path, 
         ]);
 
         return redirect()->route('categories.index')
@@ -52,18 +53,17 @@ class CategoryController extends Controller
         $data = ['name' => $validated['name']];
 
         if ($request->hasFile('icon')) {
-            // (Opcional) borrar icono anterior si existe y era de uploads
-            if ($category->icon_path && str_starts_with($category->icon_path, 'icons/uploads/')) {
-                $old = public_path($category->icon_path);
-                if (File::exists($old)) File::delete($old);
+            // (Opcional) borrar icono anterior si existe en disk public
+            if ($category->icon_path && Storage::disk('public')->exists($category->icon_path)) {
+                Storage::disk('public')->delete($category->icon_path);
             }
 
             $file = $request->file('icon');
             $ext = $file->getClientOriginalExtension();
             $filename = Str::slug($validated['name']) . '-' . time() . '.' . $ext;
-            $file->move(public_path('icons/uploads'), $filename);
+           
 
-            $data['icon_path'] = 'icons/uploads/' . $filename;
+            $data['icon_path'] =  $file->storeAs('icons', $filename, 'public');
         }
 
         $category->update($data);
