@@ -1,29 +1,69 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
-
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\RoutineController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ExerciseController;
+use App\Http\Controllers\Api\RoutineController;
 
-
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+| Importante: añadimos prefijo de NOMBRE "api." para que NO choque con web.php
+| (web tiene routines.index, api tendrá api.routines.index)
+*/
 Route::name('api.')->group(function () {
 
-    // Auth API (públicas)
+    /*
+    |--------------------------------------------------------------------------
+    | PUBLIC (sin token)
+    |--------------------------------------------------------------------------
+    */
     Route::post('/register', [AuthController::class, 'register'])->name('register');
-    Route::post('/login', [AuthController::class, 'login'])->name('login');
+    Route::post('/login',    [AuthController::class, 'login'])->name('login');
 
-    // Protegidas por Sanctum
+    // Categories (público)
+    Route::get('/categories',                       [CategoryController::class, 'index'])->name('categories.index');
+    Route::get('/categories/{category}',            [CategoryController::class, 'show'])->name('categories.show');
+    Route::get('/categories/{category}/exercises',  [CategoryController::class, 'exercises'])->name('categories.exercises');
+
+    // Exercises (público)
+    Route::get('/exercises',            [ExerciseController::class, 'index'])->name('exercises.index');
+    Route::get('/exercises/{exercise}', [ExerciseController::class, 'show'])->name('exercises.show');
+
+    // Routines (público)
+    // OJO: tu RoutineController NO puede filtrar por Auth::id() aquí, porque es público
+    Route::get('/routines',                   [RoutineController::class, 'publicIndex'])->name('routines.index');
+    Route::get('/routines/{routine}',         [RoutineController::class, 'publicShow'])->name('routines.show');
+    Route::get('/routines/{routine}/exercises',[RoutineController::class, 'exercises'])->name('routines.exercises');
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | PROTECTED (con token)
+    |--------------------------------------------------------------------------
+    */
     Route::middleware('auth:sanctum')->group(function () {
 
         Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-        Route::get('/me', [AuthController::class, 'me'])->name('me');
+        Route::get('/me',      [AuthController::class, 'me'])->name('me');
 
-        // Resources API (pi.categories.index, api.exercises.index, etc.)
-        Route::apiResource('categories', CategoryController::class);
-        Route::apiResource('exercises', ExerciseController::class);
-        Route::apiResource('routines', RoutineController::class);
+        // CRUD protegido (solo store/update/destroy para no duplicar index/show públicos)
+        Route::apiResource('categories', CategoryController::class)->only(['store','update','destroy']);
+        Route::apiResource('exercises',  ExerciseController::class)->only(['store','update','destroy']);
+        Route::apiResource('routines',   RoutineController::class)->only(['store','update','destroy']);
+
+        // Añadir / quitar ejercicio a rutina (pivot)
+        Route::post('/routines/{routine}/exercises', [RoutineController::class, 'attachExercise'])
+            ->name('routines.exercises.attach');
+
+        Route::delete('/routines/{routine}/exercises/{exercise}', [RoutineController::class, 'detachExercise'])
+            ->name('routines.exercises.detach');
+
+        // Mis rutinas (tabla)
+        Route::get('/my-routines', [RoutineController::class, 'myRoutines'])->name('my-routines.index');
+        Route::post('/my-routines', [RoutineController::class, 'subscribe'])->name('my-routines.store');
+        Route::delete('/my-routines/{routine}', [RoutineController::class, 'unsubscribe'])->name('my-routines.destroy');
     });
 });

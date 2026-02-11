@@ -19,23 +19,21 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name',
-            'icon' => 'required|file|max:2048|mimes:png,jpg,jpeg,svg', // 2MB
+            'name' => ['required','string','max:255'],
+            'icon' => ['nullable','file','mimes:png,jpg,jpeg,svg,webp','max:2048'],
         ]);
 
-        $file = $request->file('icon');
-        $ext = $file->getClientOriginalExtension();
+        $iconPath = null;
+        if ($request->hasFile('icon')) {
+            $iconPath = $request->file('icon')->store('icons', 'public'); // icons/xxx.png
+        }
 
-        $filename = Str::slug($validated['name']) . '-' . time() . '.' . $ext;
-        $path = $file->storeAs('icons', $filename, 'public');
-
-        Category::create([
+        \App\Models\Category::create([
             'name' => $validated['name'],
-            'icon_path' =>  $path, 
+            'icon_path' => $iconPath,
         ]);
 
-        return redirect()->route('categories.index')
-            ->with('success', 'Categoría creada correctamente.');
+        return redirect()->route('categories.index')->with('success', 'Categoría creada.');
     }
 
     public function edit(Category $category)
@@ -43,33 +41,25 @@ class CategoryController extends Controller
         return view('categories.edit', compact('category'));
     }
 
-    public function update(Request $request, Category $category)
+    public function update(Request $request, \App\Models\Category $category)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:categories,name,' . $category->id,
-            'icon' => 'nullable|file|max:2048|mimes:png,jpg,jpeg,svg',
+            'name' => ['required','string','max:255'],
+            'icon' => ['nullable','file','mimes:png,jpg,jpeg,svg,webp','max:2048'],
         ]);
 
-        $data = ['name' => $validated['name']];
-
         if ($request->hasFile('icon')) {
-            // (Opcional) borrar icono anterior si existe en disk public
-            if ($category->icon_path && Storage::disk('public')->exists($category->icon_path)) {
+            // borrar icono anterior si existe
+            if ($category->icon_path) {
                 Storage::disk('public')->delete($category->icon_path);
             }
-
-            $file = $request->file('icon');
-            $ext = $file->getClientOriginalExtension();
-            $filename = Str::slug($validated['name']) . '-' . time() . '.' . $ext;
-           
-
-            $data['icon_path'] =  $file->storeAs('icons', $filename, 'public');
+            $category->icon_path = $request->file('icon')->store('icons', 'public');
         }
 
-        $category->update($data);
+        $category->name = $validated['name'];
+        $category->save();
 
-        return redirect()->route('categories.index')
-            ->with('success', 'Categoría actualizada correctamente.');
+        return redirect()->route('categories.index')->with('success', 'Categoría actualizada.');
     }
 
     public function destroy(Category $category)
@@ -85,4 +75,16 @@ class CategoryController extends Controller
         return redirect()->route('categories.index')
             ->with('success', 'Categoría eliminada correctamente.');
     }
+
+    public function show(Category $category)
+    {
+        return view('categories.show', compact('category'));
+    }
+
+    public function exercises(Category $category)
+    {
+        $exercises = $category->exercises()->orderBy('name')->paginate(10);
+        return view('categories.exercises', compact('category','exercises'));
+    }
+
 }

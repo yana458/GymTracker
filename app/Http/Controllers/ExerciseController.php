@@ -57,4 +57,11 @@ class ExerciseController extends Controller
         return redirect()->route('exercises.index')
             ->with('success', 'Ejercicio eliminado correctamente.');
     }
+
+    public function show(Exercise $exercise)
+    {
+        $exercise->load('category');
+        return view('exercises.show', compact('exercise'));
+    }
+
 }

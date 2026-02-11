@@ -81,4 +81,11 @@ class CategoryController extends Controller
 
         return response()->json(['message' => 'Eliminado correctamente'], 200);
     }
+
+    public function exercises(\App\Models\Category $category)
+    {
+        $exercises = $category->exercises()->orderBy('name')->paginate(10);
+        return response()->json($exercises);
+    }
+
 }

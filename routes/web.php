@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 use App\Models\Category;
 use App\Models\Exercise;
@@ -9,17 +9,13 @@ use App\Models\Exercise;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ExerciseController;
-use App\Http\Controllers\RoutineController ;
-use Illuminate\Support\Facades\Auth;
-
+use App\Http\Controllers\RoutineController;
 
 /*
 |--------------------------------------------------------------------------
-| Web Routes
+| HOME invitado vs logueado
 |--------------------------------------------------------------------------
 */
-
-// HOME invitado vs logueado
 Route::get('/', function () {
     if (Auth::check()) {
         $user = Auth::user();
@@ -42,35 +38,63 @@ Route::get('/', function () {
     return view('home');
 })->name('home');
 
+/*
+|--------------------------------------------------------------------------
+| Dashboard / Perfil (Breeze)
+|--------------------------------------------------------------------------
+*/
+Route::get('/dashboard', fn() => view('dashboard'))
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
+Route::middleware(['auth','verified'])->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
-    // Dashboard 
-    Route::get('/dashboard', function () {
-        return view('dashboard');
-    })->middleware(['auth', 'verified'])->name('dashboard');
+/*
+|--------------------------------------------------------------------------
+| Rutas PÚBLICAS (solo lectura) 
+|--------------------------------------------------------------------------
+| GET /categories, /exercises, /routines y sub-listados
+*/
+Route::resource('categories', CategoryController::class)->only(['index','show']);
+Route::get('categories/{category}/exercises', [CategoryController::class, 'exercises'])
+    ->name('categories.exercises');
 
+Route::resource('exercises', ExerciseController::class)->only(['index','show']);
 
-    // Perfil 
-    Route::middleware('auth')->group(function () {
-        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-        Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    });
+Route::resource('routines', RoutineController::class)->only(['index','show']);
+Route::get('routines/{routine}/exercises', [RoutineController::class, 'exercises'])
+    ->name('routines.exercises');
 
+/*
+|--------------------------------------------------------------------------
+| Rutas PROTEGIDAS (crear/editar/borrar + my-routines) — “Token” => sesión auth
+|--------------------------------------------------------------------------
+*/
+Route::middleware(['auth','verified'])->group(function () {
 
-    // Secciones CRUD (protegidas con auth)
-    Route::middleware('auth')->group(function () {
+    // Categories (solo escritura)
+    Route::resource('categories', CategoryController::class)->except(['index','show','create']);
 
-        // Categorías
-        Route::resource('categories', CategoryController::class)->except(['create', 'show']);
+    // Exercises (solo escritura)
+    Route::resource('exercises', ExerciseController::class)->except(['index','show','create']);
 
-        // Ejercicios
-        Route::resource('exercises', ExerciseController::class)->except(['create', 'show']);
+    // Routines (solo escritura)
+    Route::resource('routines', RoutineController::class)->except(['index','show','create']);
 
-        // Rutinas
-        Route::resource('routines', RoutineController::class)->except(['create', 'show']);
-    });
+    // Añadir / quitar ejercicio a una rutina
+    Route::post('routines/{routine}/exercises', [RoutineController::class, 'attachExercise'])
+        ->name('routines.exercises.attach');
+    Route::delete('routines/{routine}/exercises/{exercise}', [RoutineController::class, 'detachExercise'])
+        ->name('routines.exercises.detach');
 
+    // My-routines (suscribirse / desuscribirse)
+    Route::get('/my-routines', [RoutineController::class, 'myIndex'])->name('my-routines.index');
+    Route::post('/my-routines', [RoutineController::class, 'subscribe'])->name('my-routines.subscribe');
+    Route::delete('/my-routines/{routine}', [RoutineController::class, 'unsubscribe'])->name('my-routines.unsubscribe');
+});
 
-    // Rutas de autenticación Breeze (login, register, logout, etc.)
-    require __DIR__.'/auth.php';
+require __DIR__.'/auth.php';
