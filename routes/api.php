@@ -10,8 +10,6 @@ use App\Http\Controllers\Api\RoutineController;
 |--------------------------------------------------------------------------
 | API Routes
 |--------------------------------------------------------------------------
-| Importante: añadimos prefijo de NOMBRE "api." para que NO choque con web.php
-| (web tiene routines.index, api tendrá api.routines.index)
 */
 Route::name('api.')->group(function () {
 
@@ -33,7 +31,6 @@ Route::name('api.')->group(function () {
     Route::get('/exercises/{exercise}', [ExerciseController::class, 'show'])->name('exercises.show');
 
     // Routines (público)
-    // OJO: tu RoutineController NO puede filtrar por Auth::id() aquí, porque es público
     Route::get('/routines',                   [RoutineController::class, 'publicIndex'])->name('routines.index');
     Route::get('/routines/{routine}',         [RoutineController::class, 'publicShow'])->name('routines.show');
     Route::get('/routines/{routine}/exercises',[RoutineController::class, 'exercises'])->name('routines.exercises');
