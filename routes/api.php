@@ -31,8 +31,8 @@ Route::name('api.')->group(function () {
     Route::get('/exercises/{exercise}', [ExerciseController::class, 'show'])->name('exercises.show');
 
     // Routines (público)
-    Route::get('/routines',                   [RoutineController::class, 'publicIndex'])->name('routines.index');
-    Route::get('/routines/{routine}',         [RoutineController::class, 'publicShow'])->name('routines.show');
+    Route::get('/routines',                   [RoutineController::class, 'index'])->name('routines.index');
+    Route::get('/routines/{routine}',         [RoutineController::class, 'show'])->name('routines.show');
     Route::get('/routines/{routine}/exercises',[RoutineController::class, 'exercises'])->name('routines.exercises');
 
 
