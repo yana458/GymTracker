@@ -86,15 +86,25 @@ class RoutineController extends Controller
     $request->user()->routines()->attach($routine->id);
 
     // ✅ sync del pivot exercise_routine con sets/reps/rest_seconds
-    $sync = collect($validated['exercises'])->mapWithKeys(function ($e) {
+    $sync = collect($request->input('exercises', []))->mapWithKeys(function ($e) {
+        $id = $e['id'];
+
+        // acepta ambos nombres por si el frontend manda sets/reps o target_sets/target_reps
+        $sets = $e['target_sets'] ?? $e['sets'] ?? 3;
+        $reps = $e['target_reps'] ?? $e['reps'] ?? 10;
+        $rest = $e['rest_seconds'] ?? 60;
+
         return [
-            $e['id'] => [
-                'sets' => $e['sets'],
-                'reps' => $e['reps'],
-                'rest_seconds' => $e['rest_seconds'],
+            $id => [
+                'target_sets' => (int) $sets,
+                'target_reps' => (int) $reps,
+                'rest_seconds' => (int) $rest,
             ]
         ];
     })->toArray();
+
+    $routine->exercises()->sync($sync);
+
 
     $routine->exercises()->sync($sync);
 
@@ -123,19 +133,25 @@ class RoutineController extends Controller
         'description' => $validated['description'] ?? $routine->description,
     ]);
 
-    if (isset($validated['exercises'])) {
-        $sync = collect($validated['exercises'])->mapWithKeys(function ($e) {
+   if ($request->has('exercises')) {
+        $sync = collect($request->input('exercises', []))->mapWithKeys(function ($e) {
+            $id = $e['id'];
+            $sets = $e['target_sets'] ?? $e['sets'] ?? 3;
+            $reps = $e['target_reps'] ?? $e['reps'] ?? 10;
+            $rest = $e['rest_seconds'] ?? 60;
+
             return [
-                $e['id'] => [
-                    'sets' => $e['sets'],
-                    'reps' => $e['reps'],
-                    'rest_seconds' => $e['rest_seconds'],
+                $id => [
+                    'target_sets' => (int) $sets,
+                    'target_reps' => (int) $reps,
+                    'rest_seconds' => (int) $rest,
                 ]
             ];
         })->toArray();
 
         $routine->exercises()->sync($sync);
     }
+
 
     return new RoutineResource($routine->fresh()->load('exercises'));
 }
