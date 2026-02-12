@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ExerciseController;
 use App\Http\Controllers\Api\RoutineController;
+use App\Http\Controllers\Api\MyRoutineController;
 
 /*
 |--------------------------------------------------------------------------
@@ -59,8 +60,8 @@ Route::name('api.')->group(function () {
             ->name('routines.exercises.detach');
 
         // Mis rutinas (tabla)
-        Route::get('/my-routines', [RoutineController::class, 'myRoutines'])->name('my-routines.index');
-        Route::post('/my-routines', [RoutineController::class, 'subscribe'])->name('my-routines.store');
-        Route::delete('/my-routines/{routine}', [RoutineController::class, 'unsubscribe'])->name('my-routines.destroy');
+        Route::get('my-routines', [MyRoutineController::class, 'index']);
+        Route::post('my-routines', [MyRoutineController::class, 'store']);
+        Route::delete('my-routines/{routine}', [MyRoutineController::class, 'destroy']);
     });
 });
