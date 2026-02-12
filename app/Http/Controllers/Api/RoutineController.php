@@ -66,42 +66,39 @@ class RoutineController extends Controller
     public function store(Request $request)
 {
     $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'description' => 'nullable|string',
-        'exercises' => 'required|array|min:1',
-        'exercises.*' => 'exists:exercises,id',
-        'pivot' => 'nullable|array',
+        'name' => ['required','string','max:255'],
+        'description' => ['nullable','string'],
+
+        // ✅ exercises como ARRAY DE OBJETOS
+        'exercises' => ['required','array','min:1'],
+        'exercises.*.id' => ['required','integer','exists:exercises,id'],
+        'exercises.*.sets' => ['required','integer','min:1'],
+        'exercises.*.reps' => ['required','integer','min:1'],
+        'exercises.*.rest_seconds' => ['required','integer','min:0'],
     ]);
 
-    return DB::transaction(function () use ($validated) {
+    $routine = Routine::create([
+        'name' => $validated['name'],
+        'description' => $validated['description'] ?? null,
+    ]);
 
-        $routine = Routine::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-            'user_id' => Auth::id(), 
-        ]);
+    // ✅ (recomendado) si la crea un usuario, la añadimos a "mis rutinas"
+    $request->user()->routines()->attach($routine->id);
 
-        // Suscribir al usuario (si tu enunciado usa routine_user)
-        $routine->users()->attach(Auth::id());
+    // ✅ sync del pivot exercise_routine con sets/reps/rest_seconds
+    $sync = collect($validated['exercises'])->mapWithKeys(function ($e) {
+        return [
+            $e['id'] => [
+                'sets' => $e['sets'],
+                'reps' => $e['reps'],
+                'rest_seconds' => $e['rest_seconds'],
+            ]
+        ];
+    })->toArray();
 
-        $attach = [];
-        $seq = 1;
+    $routine->exercises()->sync($sync);
 
-        foreach ($validated['exercises'] as $exId) {
-            $p = $validated['pivot'][$exId] ?? [];
-            $attach[$exId] = [
-                'sequence' => $seq++,
-                'target_sets' => (int)($p['target_sets'] ?? 3),
-                'target_reps' => (int)($p['target_reps'] ?? 10),
-                'rest_seconds' => (int)($p['rest_seconds'] ?? 60),
-            ];
-        }
-
-        $routine->exercises()->attach($attach);
-
-        return redirect()->route('routines.index')
-            ->with('success', 'Rutina creada correctamente.');
-    });
+    return new RoutineResource($routine->load('exercises'));
 }
 
     /**
@@ -109,41 +106,40 @@ class RoutineController extends Controller
      * PUT /api/routines/{routine}
      */
     public function update(Request $request, Routine $routine)
-    {
-        // El usuario debe tener esa rutina en routine_user
-        if (!$routine->users()->where('users.id', $request->user()->id)->exists()) {
-            return response()->json(['message' => 'No tienes permiso para modificar esta rutina'], 403);
-        }
+{
+    $validated = $request->validate([
+        'name' => ['sometimes','required','string','max:255'],
+        'description' => ['sometimes','nullable','string'],
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:255'],
-            'exercises' => ['required', 'array', 'min:1'],
-            'exercises.*.id' => ['required', 'exists:exercises,id'],
-            'exercises.*.target_sets' => ['nullable', 'integer', 'min:1', 'max:50'],
-            'exercises.*.target_reps' => ['nullable', 'integer', 'min:1', 'max:200'],
-            'exercises.*.rest_seconds' => ['nullable', 'integer', 'min:0', 'max:3600'],
-        ]);
+        'exercises' => ['sometimes','array','min:1'],
+        'exercises.*.id' => ['required_with:exercises','integer','exists:exercises,id'],
+        'exercises.*.sets' => ['required_with:exercises','integer','min:1'],
+        'exercises.*.reps' => ['required_with:exercises','integer','min:1'],
+        'exercises.*.rest_seconds' => ['required_with:exercises','integer','min:0'],
+    ]);
 
-        $routine->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-        ]);
+    $routine->update([
+        'name' => $validated['name'] ?? $routine->name,
+        'description' => $validated['description'] ?? $routine->description,
+    ]);
 
-        $pivot = [];
-        foreach ($validated['exercises'] as $i => $e) {
-            $pivot[$e['id']] = [
-                'sequence' => $i + 1,
-                'target_sets' => $e['target_sets'] ?? 3,
-                'target_reps' => $e['target_reps'] ?? 10,
-                'rest_seconds' => $e['rest_seconds'] ?? 60,
+    if (isset($validated['exercises'])) {
+        $sync = collect($validated['exercises'])->mapWithKeys(function ($e) {
+            return [
+                $e['id'] => [
+                    'sets' => $e['sets'],
+                    'reps' => $e['reps'],
+                    'rest_seconds' => $e['rest_seconds'],
+                ]
             ];
-        }
+        })->toArray();
 
-        $routine->exercises()->sync($pivot);
-
-        return new RoutineResource($routine->fresh()->load('exercises.category'));
+        $routine->exercises()->sync($sync);
     }
+
+    return new RoutineResource($routine->fresh()->load('exercises'));
+}
+
 
     /**
      * PROTECTED: borrar rutina (solo si es del usuario)
