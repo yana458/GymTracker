@@ -86,10 +86,11 @@ class RoutineController extends Controller
     $request->user()->routines()->attach($routine->id);
 
     // ✅ sync del pivot exercise_routine con sets/reps/rest_seconds
-    $sync = collect($request->input('exercises', []))->mapWithKeys(function ($e) {
+    $sync = collect($request->input('exercises', []))
+    ->values()
+    ->mapWithKeys(function ($e, $i) {
         $id = $e['id'];
 
-        // acepta ambos nombres por si el frontend manda sets/reps o target_sets/target_reps
         $sets = $e['target_sets'] ?? $e['sets'] ?? 3;
         $reps = $e['target_reps'] ?? $e['reps'] ?? 10;
         $rest = $e['rest_seconds'] ?? 60;
@@ -99,12 +100,11 @@ class RoutineController extends Controller
                 'target_sets' => (int) $sets,
                 'target_reps' => (int) $reps,
                 'rest_seconds' => (int) $rest,
+                'sequence' => $i + 1, 
             ]
         ];
-    })->toArray();
-
-    $routine->exercises()->sync($sync);
-
+    })
+    ->toArray();
 
     $routine->exercises()->sync($sync);
 
@@ -134,22 +134,28 @@ class RoutineController extends Controller
     ]);
 
    if ($request->has('exercises')) {
-        $sync = collect($request->input('exercises', []))->mapWithKeys(function ($e) {
-            $id = $e['id'];
-            $sets = $e['target_sets'] ?? $e['sets'] ?? 3;
-            $reps = $e['target_reps'] ?? $e['reps'] ?? 10;
-            $rest = $e['rest_seconds'] ?? 60;
+        $sync = collect($request->input('exercises', []))
+    ->values()
+    ->mapWithKeys(function ($e, $i) {
+        $id = $e['id'];
 
-            return [
-                $id => [
-                    'target_sets' => (int) $sets,
-                    'target_reps' => (int) $reps,
-                    'rest_seconds' => (int) $rest,
-                ]
-            ];
-        })->toArray();
+        $sets = $e['target_sets'] ?? $e['sets'] ?? 3;
+        $reps = $e['target_reps'] ?? $e['reps'] ?? 10;
+        $rest = $e['rest_seconds'] ?? 60;
 
-        $routine->exercises()->sync($sync);
+        return [
+            $id => [
+                'target_sets' => (int) $sets,
+                'target_reps' => (int) $reps,
+                'rest_seconds' => (int) $rest,
+                'sequence' => $i + 1,
+            ]
+        ];
+    })
+    ->toArray();
+
+$routine->exercises()->sync($sync);
+
     }
 
 

@@ -29,6 +29,7 @@ class RoutineResource extends JsonResource
                             'target_sets' => $e->pivot->target_sets ?? 3,
                             'target_reps' => $e->pivot->target_reps ?? 10,
                             'rest_seconds' => $e->pivot->rest_seconds ?? 60,
+                            'sequence' => $e->pivot->sequence ?? null,
                         ],
                     ];
                 });

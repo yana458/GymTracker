@@ -18,7 +18,8 @@ class Routine extends Model
     public function exercises()
     {
         return $this->belongsToMany(\App\Models\Exercise::class, 'exercise_routine', 'routine_id', 'exercise_id')
-            ->withPivot(['target_sets', 'target_reps', 'rest_seconds']);
+            ->withPivot(['target_sets', 'target_reps', 'rest_seconds', 'sequence']);
     }
+
 
 }
